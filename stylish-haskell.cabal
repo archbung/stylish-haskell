@@ -37,6 +37,7 @@ Library
     Language.Haskell.Stylish.Step.Tabs
     Language.Haskell.Stylish.Step.TrailingWhitespace
     Language.Haskell.Stylish.Step.UnicodeSyntax
+    Language.Haskell.Stylish.Step.VimModeline
 
   Other-modules:
     Language.Haskell.Stylish.Align
@@ -126,6 +127,8 @@ Test-suite stylish-haskell-tests
     Language.Haskell.Stylish.Step.TrailingWhitespace.Tests
     Language.Haskell.Stylish.Step.UnicodeSyntax
     Language.Haskell.Stylish.Step.UnicodeSyntax.Tests
+    Language.Haskell.Stylish.Step.VimModeline
+    Language.Haskell.Stylish.Step.VimModeline.Tests
     Language.Haskell.Stylish.Tests
     Language.Haskell.Stylish.Tests.Util
     Language.Haskell.Stylish.Util
