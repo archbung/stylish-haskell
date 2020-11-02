@@ -1,19 +1,19 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE OverloadedLists #-}
 module Language.Haskell.Stylish.Step.Imports.Tests
     ( tests
     ) where
 
 
 --------------------------------------------------------------------------------
-import           Test.Framework                 (Test, testGroup)
-import           Test.Framework.Providers.HUnit (testCase)
-import           Test.HUnit                     (Assertion, (@=?))
+import           Test.Framework                        (Test, testGroup)
+import           Test.Framework.Providers.HUnit        (testCase)
+import           Test.HUnit                            (Assertion, (@=?))
 
 
 --------------------------------------------------------------------------------
 import           Language.Haskell.Stylish.Step.Imports
 import           Language.Haskell.Stylish.Tests.Util
-
 
 
 --------------------------------------------------------------------------------
@@ -59,12 +59,15 @@ tests = testGroup "Language.Haskell.Stylish.Step.Imports.Tests"
     , testCase "case 25" case25
     , testCase "case 26 (issue 185)" case26
     , testCase "case 27" case27
+    , testCase "case 28" case28
+    , testCase "case 29" case29
+    , testCase "case 30" case30
     ]
 
 
 --------------------------------------------------------------------------------
-input :: String
-input = unlines
+input :: Snippet
+input =
     [ "module Herp where"
     , ""
     , "import qualified Data.Map  as M"
@@ -83,96 +86,88 @@ input = unlines
 
 --------------------------------------------------------------------------------
 case01 :: Assertion
-case01 = expected @=? testStep (step (Just 80) $ fromImportAlign Global) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
-        , "                                              last, length, map, null, reverse,"
-        , "                                              tail, (++))"
-        , "import           Data.Map            (Map, insert, lookup, (!))"
-        , "import qualified Data.Map            as M"
-        , "import           Only.Instances      ()"
-        , ""
-        , "import           Foo                 (Bar (..))"
-        , "import           Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case01 = assertSnippet (step (Just 80) $ fromImportAlign Global) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+    , "                                              last, length, map, null, reverse,"
+    , "                                              tail, (++))"
+    , "import           Data.Map            (Map, insert, lookup, (!))"
+    , "import qualified Data.Map            as M"
+    , "import           Only.Instances      ()"
+    , ""
+    , "import           Foo                 (Bar (..))"
+    , "import           Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case02 :: Assertion
-case02 = expected @=? testStep (step (Just 80) $ fromImportAlign Group) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
-        , "                                         length, map, null, reverse, tail, (++))"
-        , "import           Data.Map       (Map, insert, lookup, (!))"
-        , "import qualified Data.Map       as M"
-        , "import           Only.Instances ()"
-        , ""
-        , "import Foo                 (Bar (..))"
-        , "import Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case02 = assertSnippet (step (Just 80) $ fromImportAlign Group) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
+    , "                                         length, map, null, reverse, tail, (++))"
+    , "import           Data.Map       (Map, insert, lookup, (!))"
+    , "import qualified Data.Map       as M"
+    , "import           Only.Instances ()"
+    , ""
+    , "import Foo                 (Bar (..))"
+    , "import Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case03 :: Assertion
-case03 = expected @=? testStep (step (Just 80) $ fromImportAlign None) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import Control.Monad"
-        , "import Data.List as List (concat, foldl, foldr, head, init, last, length, map,"
-        , "                          null, reverse, tail, (++))"
-        , "import Data.Map (Map, insert, lookup, (!))"
-        , "import qualified Data.Map as M"
-        , "import Only.Instances ()"
-        , ""
-        , "import Foo (Bar (..))"
-        , "import Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case03 = assertSnippet (step (Just 80) $ fromImportAlign None) input
+    [ "module Herp where"
+    , ""
+    , "import Control.Monad"
+    , "import Data.List as List (concat, foldl, foldr, head, init, last, length, map,"
+    , "                          null, reverse, tail, (++))"
+    , "import Data.Map (Map, insert, lookup, (!))"
+    , "import qualified Data.Map as M"
+    , "import Only.Instances ()"
+    , ""
+    , "import Foo (Bar (..))"
+    , "import Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case04 :: Assertion
-case04 = expected @=? testStep (step (Just 80) $ fromImportAlign Global) input'
-  where
-    input' =
-        "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
+case04 = assertSnippet (step (Just 80) $ fromImportAlign Global)
+    [ "import Data.Aeson.Types (object, typeMismatch, FromJSON(..)," ++
         "ToJSON(..), Value(..), parseEither, (.!=), (.:), (.:?), (.=))"
-
-    expected = unlines
-        [ "import           Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..),"
-        , "                                   object, parseEither, typeMismatch, (.!=),"
-        , "                                   (.:), (.:?), (.=))"
-        ]
+    ]
+    [ "import           Data.Aeson.Types (FromJSON (..), ToJSON (..), Value (..),"
+    , "                                   object, parseEither, typeMismatch, (.!=),"
+    , "                                   (.:), (.:?), (.=))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case05 :: Assertion
-case05 = input' @=? testStep (step (Just 80) $ fromImportAlign Group) input'
+case05 = assertSnippet (step (Just 80) $ fromImportAlign Group) input' input'
   where
-    input' = "import Distribution.PackageDescription.Configuration " ++
-        "(finalizePackageDescription)\n"
+    -- Putting this on a different line shouldn't really help.
+    input' = ["import Distribution.PackageDescription.Configuration " ++
+        "(finalizePackageDescription)"]
 
 
 --------------------------------------------------------------------------------
 case06 :: Assertion
-case06 = input' @=? testStep (step (Just 80) $ fromImportAlign File) input'
+case06 = assertSnippet (step (Just 80) $ fromImportAlign File) input' input'
   where
-    input' = unlines
+    input' =
         [ "import Bar.Qux"
         , "import Foo.Bar"
         ]
@@ -180,442 +175,434 @@ case06 = input' @=? testStep (step (Just 80) $ fromImportAlign File) input'
 
 --------------------------------------------------------------------------------
 case07 :: Assertion
-case07 = expected @=? testStep (step (Just 80) $ fromImportAlign File) input'
-  where
-    input' = unlines
-        [ "import Bar.Qux"
-        , ""
-        , "import qualified Foo.Bar"
-        ]
-
-    expected = unlines
-        [ "import           Bar.Qux"
-        , ""
-        , "import qualified Foo.Bar"
-        ]
+case07 = assertSnippet (step (Just 80) $ fromImportAlign File)
+    [ "import Bar.Qux"
+    , ""
+    , "import qualified Foo.Bar"
+    ]
+    [ "import           Bar.Qux"
+    , ""
+    , "import qualified Foo.Bar"
+    ]
 
 
 --------------------------------------------------------------------------------
 case08 :: Assertion
-case08 = expected
-    @=? testStep (step (Just 80) $ Options Global WithAlias True Inline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
-        , "                                     last, length, map, null, reverse, tail,"
-        , "                                     (++))"
-        , "import           Data.Map            (Map, insert, lookup, (!))"
-        , "import qualified Data.Map            as M"
-        , "import           Only.Instances      ()"
-        , ""
-        , "import           Foo                 (Bar (..))"
-        , "import           Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case08 =
+  let
+    options = Options Global WithAlias True Inline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+    , "                                     last, length, map, null, reverse, tail,"
+    , "                                     (++))"
+    , "import           Data.Map            (Map, insert, lookup, (!))"
+    , "import qualified Data.Map            as M"
+    , "import           Only.Instances      ()"
+    , ""
+    , "import           Foo                 (Bar (..))"
+    , "import           Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case08b :: Assertion
-case08b = expected
-    @=? testStep (step (Just 80) $ Options Global WithModuleName True Inline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        ["module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List           as List (concat, foldl, foldr, head, init,"
-        , "                     last, length, map, null, reverse, tail, (++))"
-        , "import           Data.Map            (Map, insert, lookup, (!))"
-        , "import qualified Data.Map            as M"
-        , "import           Only.Instances      ()"
-        , ""
-        , "import           Foo                 (Bar (..))"
-        , "import           Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case08b =
+  let
+    options = Options Global WithModuleName True Inline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options) input
+    ["module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List           as List (concat, foldl, foldr, head, init,"
+    , "                     last, length, map, null, reverse, tail, (++))"
+    , "import           Data.Map            (Map, insert, lookup, (!))"
+    , "import qualified Data.Map            as M"
+    , "import           Only.Instances      ()"
+    , ""
+    , "import           Foo                 (Bar (..))"
+    , "import           Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case09 :: Assertion
-case09 = expected
-    @=? testStep (step (Just 80) $ Options Global WithAlias True Multiline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List           as List"
-        , "    ( concat"
-        , "    , foldl"
-        , "    , foldr"
-        , "    , head"
-        , "    , init"
-        , "    , last"
-        , "    , length"
-        , "    , map"
-        , "    , null"
-        , "    , reverse"
-        , "    , tail"
-        , "    , (++)"
-        , "    )"
-        , "import           Data.Map            (Map, insert, lookup, (!))"
-        , "import qualified Data.Map            as M"
-        , "import           Only.Instances      ()"
-        , ""
-        , "import           Foo                 (Bar (..))"
-        , "import           Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case09 =
+  let
+    options = Options Global WithAlias True Multiline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List           as List"
+    , "    ( concat"
+    , "    , foldl"
+    , "    , foldr"
+    , "    , head"
+    , "    , init"
+    , "    , last"
+    , "    , length"
+    , "    , map"
+    , "    , null"
+    , "    , reverse"
+    , "    , tail"
+    , "    , (++)"
+    , "    )"
+    , "import           Data.Map            (Map, insert, lookup, (!))"
+    , "import qualified Data.Map            as M"
+    , "import           Only.Instances      ()"
+    , ""
+    , "import           Foo                 (Bar (..))"
+    , "import           Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case10 :: Assertion
-case10 = expected
-    @=? testStep (step (Just 40) $ Options Group WithAlias True Multiline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List      as List"
-        , "    ( concat"
-        , "    , foldl"
-        , "    , foldr"
-        , "    , head"
-        , "    , init"
-        , "    , last"
-        , "    , length"
-        , "    , map"
-        , "    , null"
-        , "    , reverse"
-        , "    , tail"
-        , "    , (++)"
-        , "    )"
-        , "import           Data.Map"
-        , "    ( Map"
-        , "    , insert"
-        , "    , lookup"
-        , "    , (!)"
-        , "    )"
-        , "import qualified Data.Map       as M"
-        , "import           Only.Instances ()"
-        , ""
-        , "import Foo                 (Bar (..))"
-        , "import Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case10 =
+  let
+    options = Options Group WithAlias True Multiline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 40) options) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List      as List"
+    , "    ( concat"
+    , "    , foldl"
+    , "    , foldr"
+    , "    , head"
+    , "    , init"
+    , "    , last"
+    , "    , length"
+    , "    , map"
+    , "    , null"
+    , "    , reverse"
+    , "    , tail"
+    , "    , (++)"
+    , "    )"
+    , "import           Data.Map"
+    , "    ( Map"
+    , "    , insert"
+    , "    , lookup"
+    , "    , (!)"
+    , "    )"
+    , "import qualified Data.Map       as M"
+    , "import           Only.Instances ()"
+    , ""
+    , "import Foo                 (Bar (..))"
+    , "import Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
+
 
 
 --------------------------------------------------------------------------------
 case11 :: Assertion
-case11 = expected
-    @=? testStep (step (Just 80) $ Options Group NewLine True Inline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List      as List"
-        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
-        , "    (++))"
-        , "import           Data.Map"
-        , "    (Map, insert, lookup, (!))"
-        , "import qualified Data.Map       as M"
-        , "import           Only.Instances"
-        , "    ()"
-        , ""
-        , "import Foo"
-        , "    (Bar (..))"
-        , "import Herp.Derp.Internals hiding"
-        , "    (foo)"
+case11 =
+  let
+    options = Options Group NewLine True Inline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List      as List"
+    , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+    , "    (++))"
+    , "import           Data.Map"
+    , "    (Map, insert, lookup, (!))"
+    , "import qualified Data.Map       as M"
+    , "import           Only.Instances"
+    , "    ()"
+    , ""
+    , "import Foo"
+    , "    (Bar (..))"
+    , "import Herp.Derp.Internals hiding"
+    , "    (foo)"
 
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
-
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 case11b :: Assertion
-case11b = expected
-    @=? testStep (step (Just 80) $ Options Group WithModuleName True Inline Inherit (LPConstant 4) True False) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
-        , "                     length, map, null, reverse, tail, (++))"
-        , "import           Data.Map       (Map, insert, lookup, (!))"
-        , "import qualified Data.Map       as M"
-        , "import           Only.Instances ()"
-        , ""
-        , "import Foo                 (Bar (..))"
-        , "import Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case11b =
+  let
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List      as List (concat, foldl, foldr, head, init, last,"
+    , "                     length, map, null, reverse, tail, (++))"
+    , "import           Data.Map       (Map, insert, lookup, (!))"
+    , "import qualified Data.Map       as M"
+    , "import           Only.Instances ()"
+    , ""
+    , "import Foo                 (Bar (..))"
+    , "import Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
 
 
 --------------------------------------------------------------------------------
 case12 :: Assertion
-case12 = expected
-    @=? testStep (step (Just 80) $ Options Group NewLine True Inline Inherit (LPConstant 2) True False) input'
-  where
-    input' = unlines
-        [ "import Data.List (map)"
-        ]
-
-    expected = unlines
-        [ "import Data.List"
-        , "  (map)"
-        ]
+case12 =
+  let
+    options = Options Group NewLine True Inline Inherit (LPConstant 2) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import Data.List (map)"
+    ]
+    [ "import Data.List"
+    , "  (map)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case12b :: Assertion
-case12b = expected
-    @=? testStep (step (Just 80) $ Options Group WithModuleName True Inline Inherit (LPConstant 2) True False) input'
-  where
-    input' = unlines
-        [ "import Data.List (map)"
-        ]
-
-    expected = input'
+case12b =
+  let
+    options = Options Group WithModuleName True Inline Inherit (LPConstant 2) True False
+  in
+    assertSnippet (step (Just 80) options)
+    ["import Data.List (map)"]
+    ["import Data.List (map)"]
 
 
 --------------------------------------------------------------------------------
 case13 :: Assertion
-case13 = expected
-    @=? testStep (step (Just 80) $ Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False) input'
-  where
-    input' = unlines
-        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
-        , "    last, length, map, null, reverse, tail, (++))"
-        ]
+case13 =
+  let
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+    , "    last, length, map, null, reverse, tail, (++))"
+    ]
+    [ "import qualified Data.List as List"
+    , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+    , "    (++))"
+    ]
 
-    expected = unlines
-        [ "import qualified Data.List as List"
-        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
-        , "    (++))"
-        ]
-
-
---------------------------------------------------------------------------------
 case13b :: Assertion
-case13b = expected
-    @=? testStep (step (Just 80) $ Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False) input'
-  where
-    input' = unlines
-        [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
-        , "    last, length, map, null, reverse, tail, (++))"
-        ]
-
-    expected = unlines
-        [ "import qualified Data.List as List"
-        , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
-        , "    (++))"
-        ]
+case13b =
+  let
+    options = Options None WithModuleName True InlineWithBreak Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import qualified Data.List as List (concat, foldl, foldr, head, init,"
+    , "    last, length, map, null, reverse, tail, (++))"
+    ]
+    [ "import qualified Data.List as List"
+    , "    (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail,"
+    , "    (++))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case14 :: Assertion
-case14 = expected
-    @=? testStep
-      (step (Just 80) $ Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False) expected
-  where
-    expected = unlines
-        [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
-        ]
+case14 =
+  let
+    options = Options None WithAlias True InlineWithBreak Inherit (LPConstant 10) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
+    ]
+    [ "import qualified Data.List as List (concat, map, null, reverse, tail, (++))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case15 :: Assertion
-case15 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) True False) input'
-  where
-    expected = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import qualified Data.Acid as Acid"
-        , "    ( closeAcidState"
-        , "    , createCheckpoint"
-        , "    , openLocalStateFrom"
-        , "    )"
-        , "import Data.Default.Class (Default (def))"
-        , ""
-        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
-        ]
-
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
-        , "import Data.Default.Class (Default (def))"
-        , ""
-        , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
-        ]
+case15 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import Data.Acid (AcidState)"
+    , "import qualified Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (foo, bar)"
+    ]
+    [ "import Data.Acid (AcidState)"
+    , "import qualified Data.Acid as Acid"
+    , "    ( closeAcidState"
+    , "    , createCheckpoint"
+    , "    , openLocalStateFrom"
+    , "    )"
+    , "import Data.Default.Class (Default (def))"
+    , ""
+    , "import qualified Herp.Derp.Internal.Types.Foobar as Internal (bar, foo)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case16 :: Assertion
-case16 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) False False) input'
-  where
-    expected = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.Maybe (Maybe(Just, Nothing))"
-        , ""
-        , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
-        ]
-
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.Maybe (Maybe   (Just, Nothing))"
-        , ""
-        , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
-        ]
+case16 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) False False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.Maybe (Maybe   (Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+    ]
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.Maybe (Maybe(Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case17 :: Assertion
-case17 = expected
-    @=? testStep (step (Just 80) $ Options None AfterAlias True Multiline Inherit (LPConstant 4) True False) input'
-  where
-    expected = unlines
-        [ "import Control.Applicative (Applicative (pure, (<*>)))"
-        , ""
-        , "import Data.Identity (Identity (Identity, runIdentity))"
-        ]
-
-    input' = unlines
-        [ "import Control.Applicative (Applicative ((<*>),pure))"
-        , ""
-        , "import Data.Identity (Identity (runIdentity,Identity))"
-        ]
+case17 =
+  let
+    options = Options None AfterAlias True Multiline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import Control.Applicative (Applicative ((<*>),pure))"
+    , ""
+    , "import Data.Identity (Identity (runIdentity,Identity))"
+    ]
+    [ "import Control.Applicative (Applicative (pure, (<*>)))"
+    , ""
+    , "import Data.Identity (Identity (Identity, runIdentity))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case18 :: Assertion
-case18 = expected @=? testStep
-    (step (Just 40) $ Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False) input'
-  where
-    expected = unlines
-           ----------------------------------------
-        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
-        , ""
-        , "import Data.Identity"
-        , "    (Identity (Identity, runIdentity))"
-        , ""
-        , "import Data.Acid as Acid"
-        , "    ( closeAcidState"
-        , "    , createCheckpoint"
-        , "    , openLocalStateFrom"
-        , "    )"
-        ]
-
-    input' = unlines
-        [ "import Data.Foo as Foo (Bar, Baz, Foo)"
-        , ""
-        , "import Data.Identity (Identity (Identity, runIdentity))"
-        , ""
-        , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
-        ]
+case18 =
+  let
+    options = Options None AfterAlias True InlineToMultiline Inherit (LPConstant 4) True False
+  in
+    assertSnippet (step (Just 40) options)
+    [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+    , ""
+    , "import Data.Identity (Identity (Identity, runIdentity))"
+    , ""
+    , "import Data.Acid as Acid (closeAcidState, createCheckpoint, openLocalStateFrom)"
+    ]
+       ----------------------------------------
+    [ "import Data.Foo as Foo (Bar, Baz, Foo)"
+    , ""
+    , "import Data.Identity"
+    , "    (Identity (Identity, runIdentity))"
+    , ""
+    , "import Data.Acid as Acid"
+    , "    ( closeAcidState"
+    , "    , createCheckpoint"
+    , "    , openLocalStateFrom"
+    , "    )"
+    ]
 
 
 --------------------------------------------------------------------------------
 case19 :: Assertion
-case19 = expected @=? testStep
-    (step (Just 40) $ Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False) case19input
-  where
-    expected = unlines
-           ----------------------------------------
-        [ "import           Prelude ()"
-        , "import           Prelude.Compat hiding"
-        , "                 (foldMap)"
-        , ""
-        , "import           Data.List"
-        , "                 (foldl', intercalate,"
-        , "                 intersperse)"
-        ]
-
+case19 =
+  let
+    options = Options Global NewLine True InlineWithBreak RightAfter (LPConstant 17) True False
+  in
+    assertSnippet (step (Just 40) options) case19input
+       ----------------------------------------
+    [ "import           Prelude ()"
+    , "import           Prelude.Compat hiding"
+    , "                 (foldMap)"
+    , ""
+    , "import           Data.List"
+    , "                 (foldl', intercalate,"
+    , "                 intersperse)"
+    ]
 
 case19b :: Assertion
-case19b = expected @=? testStep
-    (step (Just 40) $ Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False) case19input
-  where
-    expected = unlines
-           ----------------------------------------
-        [ "import Prelude ()"
-        , "import Prelude.Compat hiding"
-        , "                 (foldMap)"
-        , ""
-        , "import Data.List"
-        , "                 (foldl', intercalate,"
-        , "                 intersperse)"
-        ]
-
+case19b =
+  let
+    options = Options File NewLine True InlineWithBreak RightAfter (LPConstant 17) True False
+  in
+    assertSnippet (step (Just 40) options) case19input
+       ----------------------------------------
+    [ "import Prelude ()"
+    , "import Prelude.Compat hiding (foldMap)"
+    , ""
+    , "import Data.List"
+    , "                 (foldl', intercalate,"
+    , "                 intersperse)"
+    ]
 
 case19c :: Assertion
-case19c = expected @=? testStep
-    (step (Just 40) $ Options File NewLine True InlineWithBreak RightAfter LPModuleName True False) case19input
-  where
-    expected = unlines
-           ----------------------------------------
-        [ "import Prelude ()"
-        , "import Prelude.Compat hiding"
-        , "       (foldMap)"
-        , ""
-        , "import Data.List"
-        , "       (foldl', intercalate,"
-        , "       intersperse)"
-        ]
-
+case19c =
+  let
+    options = Options File NewLine True InlineWithBreak RightAfter LPModuleName True False
+  in
+    assertSnippet (step (Just 40) options) case19input
+       ----------------------------------------
+    [ "import Prelude ()"
+    , "import Prelude.Compat hiding (foldMap)"
+    , ""
+    , "import Data.List"
+    , "       (foldl', intercalate,"
+    , "       intersperse)"
+    ]
 
 case19d :: Assertion
-case19d = expected @=? testStep
-    (step (Just 40) $ Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False) case19input
-  where
-    expected = unlines
-           ----------------------------------------
-        [ "import           Prelude ()"
-        , "import           Prelude.Compat hiding"
-        , "                 (foldMap)"
-        , ""
-        , "import           Data.List"
-        , "                 (foldl', intercalate,"
-        , "                 intersperse)"
-        ]
+case19d =
+  let
+    options = Options Global NewLine True InlineWithBreak RightAfter LPModuleName True False
+  in
+    assertSnippet (step (Just 40) options) case19input
+       ----------------------------------------
+    [ "import           Prelude ()"
+    , "import           Prelude.Compat hiding"
+    , "                 (foldMap)"
+    , ""
+    , "import           Data.List"
+    , "                 (foldl', intercalate,"
+    , "                 intersperse)"
+    ]
 
-
-case19input :: String
-case19input = unlines
-        [ "import Prelude.Compat hiding (foldMap)"
-        , "import Prelude ()"
-        , ""
-        , "import Data.List (foldl', intercalate, intersperse)"
-        ]
+case19input :: Snippet
+case19input = Snippet
+    [ "import Prelude.Compat hiding (foldMap)"
+    , "import Prelude ()"
+    , ""
+    , "import Data.List (foldl', intercalate, intersperse)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case20 :: Assertion
 case20 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
+    @=? testSnippet (step (Just 80) defaultOptions) input'
   where
-    expected = unlines
-        [ "import {-# SOURCE #-} Data.ByteString as BS"
-        , "import qualified Data.Map        as Map"
-        , "import           Data.Set        (empty)"
+    expected = Snippet
+        [ "import {-# SOURCE #-}           Data.ByteString as BS"
+        , "import                qualified Data.Map        as Map"
+        , "import                          Data.Set        (empty)"
         , "import {-# SOURCE #-} qualified Data.Text       as T"
         ]
-    input' = unlines
+    input' = Snippet
         [ "import {-# SOURCE #-}    Data.ByteString as BS"
         , "import {-# SOURCE #-} qualified Data.Text as T"
         , "import qualified   Data.Map as Map"
@@ -625,191 +612,233 @@ case20 = expected
 
 --------------------------------------------------------------------------------
 case21 :: Assertion
-case21 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
-  where
-    expected = unlines
-        [ "{-# LANGUAGE ExplicitNamespaces #-}"
-        , "import           X1 (A, B, C)"
-        , "import           X2 (A, B, C)"
-        , "import           X3 (A (..))"
-        , "import           X4 (A (..))"
-        , "import           X5 (A (..))"
-        , "import           X6 (A (a, b, c), B (m, n, o))"
-        , "import           X7 (a, b, c)"
-        , "import           X8 (type (+), (+))"
-        , "import           X9 hiding (x, y, z)"
-        ]
-    input' = unlines
-        [ "{-# LANGUAGE ExplicitNamespaces #-}"
-        , "import X1 (A, B, A, C, A, B, A)"
-        , "import X2 (C(), B(), A())"
-        , "import X3 (A(..))"
-        , "import X4 (A, A(..))"
-        , "import X5 (A(..), A(x))"
-        , "import X6 (A(a,b), B(m,n), A(c), B(o))"
-        , "import X7 (a, b, a, c)"
-        , "import X8 (type (+), (+))"
-        , "import X9 hiding (x, y, z, x)"
-        ]
+case21 =
+    assertSnippet (step (Just 80) defaultOptions)
+    [ "{-# LANGUAGE ExplicitNamespaces #-}"
+    , "import X1 (A, B, A, C, A, B, A)"
+    , "import X2 (C(), B(), A())"
+    , "import X3 (A(..))"
+    , "import X4 (A, A(..))"
+    , "import X5 (A(..), A(x))"
+    , "import X6 (A(a,b), B(m,n), A(c), B(o))"
+    , "import X7 (a, b, a, c)"
+    , "import X8 (type (+), (+))"
+    , "import X9 hiding (x, y, z, x)"
+    ]
+    [ "{-# LANGUAGE ExplicitNamespaces #-}"
+    , "import           X1 (A, B, C)"
+    , "import           X2 (A, B, C)"
+    , "import           X3 (A (..))"
+    , "import           X4 (A (..))"
+    , "import           X5 (A (..))"
+    , "import           X6 (A (a, b, c), B (m, n, o))"
+    , "import           X7 (a, b, c)"
+    , "import           X8 (type (+), (+))"
+    , "import           X9 hiding (x, y, z)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case22 :: Assertion
-case22 = expected
-    @=? testStep (step (Just 80) defaultOptions) input'
-  where
-    expected = unlines
-        [ "{-# LANGUAGE PackageImports #-}"
-        , "import           A"
-        , "import           \"blah\" A"
-        , "import           \"foo\" A"
-        , "import qualified \"foo\" A  as X"
-        , "import           \"foo\" B  (shortName, someLongName, someLongerName,"
-        , "                           theLongestNameYet)"
-        ]
-    input' = unlines
-        [ "{-# LANGUAGE PackageImports #-}"
-        , "import A"
-        , "import \"foo\" A"
-        , "import \"blah\" A"
-        , "import qualified \"foo\" A as X"
-        -- this import fits into 80 chats without "foo",
-        -- but doesn't fit when "foo" is included into the calculation
-        , "import \"foo\" B (someLongName, someLongerName, " ++
-          "theLongestNameYet, shortName)"
-        ]
+case22 = assertSnippet (step (Just 80) defaultOptions)
+    [ "{-# LANGUAGE PackageImports #-}"
+    , "import A"
+    , "import \"foo\" A"
+    , "import \"blah\" A"
+    , "import qualified \"foo\" A as X"
+    -- this import fits into 80 chats without "foo",
+    -- but doesn't fit when "foo" is included into the calculation
+    , "import \"foo\" B (someLongName, someLongerName, " ++
+      "theLongestNameYet, shortName)"
+    ]
+    [ "{-# LANGUAGE PackageImports #-}"
+    , "import           A"
+    , "import           \"blah\" A"
+    , "import           \"foo\" A"
+    , "import qualified \"foo\" A  as X"
+    , "import           \"foo\" B  (shortName, someLongName, someLongerName,"
+    , "                           theLongestNameYet)"
+    ]
 
 
 --------------------------------------------------------------------------------
 case23 :: Assertion
-case23 = expected
-    @=? testStep (step (Just 40) $ Options None AfterAlias False Inline Inherit (LPConstant 4) True True) input'
-  where
-    expected = unlines
-        [ "import Data.Acid ( AcidState )"
-        , "import Data.Default.Class ( Default (def) )"
-        , ""
-        , "import Data.Monoid ( (<>) )"
-        , ""
-        , "import Data.ALongName.Foo ( Boo, Foo,"
-        , "                            Goo )"
-        ]
-
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.Monoid ((<>) )"
-        , ""
-        , "import Data.ALongName.Foo (Foo, Goo, Boo)"
-        ]
+case23 =
+  let
+    options = Options None AfterAlias False Inline Inherit (LPConstant 4) True True
+  in
+    assertSnippet (step (Just 40) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.Monoid ((<>) )"
+    , ""
+    , "import Data.ALongName.Foo (Foo, Goo, Boo)"
+    ]
+       ----------------------------------------
+    [ "import Data.Acid ( AcidState )"
+    , "import Data.Default.Class ( Default (def) )"
+    , ""
+    , "import Data.Monoid ( (<>) )"
+    , ""
+    , "import Data.ALongName.Foo ( Boo, Foo,"
+    , "                            Goo )"
+    ]
 
 
 --------------------------------------------------------------------------------
 case23b :: Assertion
-case23b = expected
-    @=? testStep (step (Just 40) $ Options None WithModuleName False Inline Inherit (LPConstant 4) True True) input'
-  where
-    expected = unlines
-        [ "import Data.Acid ( AcidState )"
-        , "import Data.Default.Class"
-        , "           ( Default (def) )"
-        , ""
-        , "import Data.Monoid ( (<>) )"
-        , ""
-        , "import Data.ALongName.Foo ( Boo, Foo,"
-        , "           Goo )"
-        ]
-
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.Monoid ((<>) )"
-        , ""
-        , "import Data.ALongName.Foo (Foo, Goo, Boo)"
-        ]
+case23b =
+  let
+    options = Options None WithModuleName False Inline Inherit (LPConstant 4) True True
+  in
+    assertSnippet (step (Just 40) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.Monoid ((<>) )"
+    , ""
+    , "import Data.ALongName.Foo (Foo, Goo, Boo)"
+    ]
+       ----------------------------------------
+    [ "import Data.Acid ( AcidState )"
+    , "import Data.Default.Class"
+    , "           ( Default (def) )"
+    , ""
+    , "import Data.Monoid ( (<>) )"
+    , ""
+    , "import Data.ALongName.Foo ( Boo, Foo,"
+    , "           Goo )"
+    ]
 
 
 --------------------------------------------------------------------------------
 case24 :: Assertion
-case24 = expected
-    @=? testStep (step (Just 40) $ Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True) input'
-  where
-    expected = unlines
-        [ "import Data.Acid ( AcidState )"
-        , "import Data.Default.Class"
-        , "    ( Default (def) )"
-        , ""
-        , "import Data.ALongName.Foo"
-        , "    ( BooReallyLong, FooReallyLong,"
-        , "    GooReallyLong )"
-        ]
-
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.ALongName.Foo (FooReallyLong, " ++
-          "GooReallyLong, BooReallyLong)"
-        ]
+case24 =
+  let
+    options = Options None AfterAlias False InlineWithBreak Inherit (LPConstant 4) True True
+  in
+    assertSnippet (step (Just 40) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.ALongName.Foo (FooReallyLong, " ++
+      "GooReallyLong, BooReallyLong)"
+    ]
+       ----------------------------------------
+    [ "import Data.Acid ( AcidState )"
+    , "import Data.Default.Class"
+    , "    ( Default (def) )"
+    , ""
+    , "import Data.ALongName.Foo"
+    , "    ( BooReallyLong, FooReallyLong,"
+    , "    GooReallyLong )"
+    ]
 
 
 --------------------------------------------------------------------------------
 case25 :: Assertion
-case25 = expected
-    @=? testStep (step (Just 80) $ Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False) input'
-  where
-    expected = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import           Data.Maybe (Maybe(Just, Nothing))"
-        , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
-        , ""
-        , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
-        ]
-    input' = unlines
-        [ "import Data.Acid (AcidState)"
-        , "import Data.Default.Class (Default(def))"
-        , ""
-        , "import Data.Maybe (Maybe   (Just, Nothing))"
-        , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
-        , ""
-        , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
-        ]
+case25 =
+  let
+    options = Options Group AfterAlias False Multiline Inherit (LPConstant 4) False False
+  in
+    assertSnippet (step (Just 80) options)
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import Data.Maybe (Maybe   (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+    ]
+    [ "import Data.Acid (AcidState)"
+    , "import Data.Default.Class (Default(def))"
+    , ""
+    , "import           Data.Maybe (Maybe(Just, Nothing))"
+    , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo(Bar, Foo), Goo(Goo))"
+    ]
 
 
 --------------------------------------------------------------------------------
 case26 :: Assertion
-case26 = expected
-    @=? testStep (step (Just 80) options ) input'
+case26 =
+    assertSnippet (step (Just 80) options)
+    ["import Data.List"]
+    ["import           Data.List"]
   where
     options = defaultOptions { listAlign = NewLine, longListAlign = Multiline }
-    input' = unlines
-        [ "import Data.List"
-        ]
-    expected = unlines
-        [ "import           Data.List"
-        ]
 
 
 --------------------------------------------------------------------------------
 case27 :: Assertion
-case27 = expected @=? testStep (step Nothing $ fromImportAlign Global) input
-  where
-    expected = unlines
-        [ "module Herp where"
-        , ""
-        , "import           Control.Monad"
-        , "import           Data.List           as List (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail, (++))"
-        , "import           Data.Map            (Map, insert, lookup, (!))"
-        , "import qualified Data.Map            as M"
-        , "import           Only.Instances      ()"
-        , ""
-        , "import           Foo                 (Bar (..))"
-        , "import           Herp.Derp.Internals hiding (foo)"
-        , ""
-        , "herp = putStrLn \"import Hello world\""
-        ]
+case27 = assertSnippet (step Nothing $ fromImportAlign Global) input
+    [ "module Herp where"
+    , ""
+    , "import           Control.Monad"
+    , "import           Data.List           as List (concat, foldl, foldr, head, init, last, length, map, null, reverse, tail, (++))"
+    , "import           Data.Map            (Map, insert, lookup, (!))"
+    , "import qualified Data.Map            as M"
+    , "import           Only.Instances      ()"
+    , ""
+    , "import           Foo                 (Bar (..))"
+    , "import           Herp.Derp.Internals hiding (foo)"
+    , ""
+    , "herp = putStrLn \"import Hello world\""
+    ]
+
+
+--------------------------------------------------------------------------------
+case28 :: Assertion
+case28 = assertSnippet (step (Just 80) $ fromImportAlign Global)
+    [ "import Data.Default.Class (Default(def))"
+    , "import qualified Data.Aeson as JSON"
+    , "import qualified Data.Aeson as JSON"
+    , "import Control.Monad"
+    , "import Control.Monad"
+    , ""
+    , "import Data.Maybe (Maybe   (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra (Maybe(Just, Nothing))"
+    , ""
+    , "import Data.Foo (Foo (Foo,Bar), Goo(Goo))"
+    , "import Data.Foo (Foo (Foo,Bar))"
+    , "import Data.Set (empty, intersect)"
+    , "import Data.Set (empty, nub)"
+    ]
+    [ "import           Control.Monad"
+    ,  "import qualified Data.Aeson         as JSON"
+    , "import           Data.Default.Class (Default (def))"
+    , ""
+    , "import           Data.Maybe         (Maybe (Just, Nothing))"
+    , "import qualified Data.Maybe.Extra   (Maybe (Just, Nothing))"
+    , ""
+    , "import           Data.Foo           (Foo (Bar, Foo), Goo (Goo))"
+    , "import           Data.Set           (empty, intersect, nub)"
+    ]
+
+
+--------------------------------------------------------------------------------
+case29 :: Assertion
+case29 = assertSnippet (step Nothing $ fromImportAlign Group)
+    -- Check that "Group" mode recognizes groups with multi-line imports
+    [ "import Foo (foo)"
+    , "import BarBar ( bar"
+    , "              , kek)"
+    , "import Abcd ()"
+    , ""
+    , "import A (A)"
+    ]
+    [ "import Abcd   ()"
+    , "import BarBar (bar, kek)"
+    , "import Foo    (foo)"
+    , ""
+    , "import A (A)"
+    ]
+
+
+--------------------------------------------------------------------------------
+case30 :: Assertion
+case30 = assertSnippet (step Nothing defaultOptions {separateLists = False})
+    ["import           Data.Monoid (Monoid (..))"]
+    ["import           Data.Monoid (Monoid(..))"]
